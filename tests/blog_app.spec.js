@@ -67,3 +67,35 @@ describe('5.19 When logged in', () => {
     await expect(page.getByText( "belladurmiente walt disney")).toBeVisible()
   })
 })
+
+describe('5.20 edicion de blog', () => {
+  beforeEach(async ({ page, request }) => {
+    await request.post('http://localhost:3001/api/testing/reset')
+    await request.post('http://localhost:3001/api/users', {
+        data: {
+            name: "Matti Luukkainen",
+            username: "mluukkai",
+            password: "salainen"
+        }
+    })
+    await page.goto('http://localhost:5173')
+    await page.getByTestId('username').fill('mluukkai')
+    await page.getByTestId('password').fill('salainen')
+    await page.getByRole('button', {name: "login"}).click()
+  })
+
+  test('edicion de blog', async ({ page }) => {
+    await page.getByRole('button', {name: "create new blog"}).click()
+    // await page.getByText("Create new").waitFor()
+    const texboxes = await page.getByRole('textbox').all()
+    await texboxes[0].fill('belladurmiente')
+    await texboxes[1].fill('walt disney')
+    await texboxes[2].fill('disney.com')
+    await page.getByRole('button', {name: "create"}).click()
+    
+    await page.getByRole('button', {name: "view"}).click()
+    await page.getByRole('button', {name: "like"}).click()
+    await page.getByTestId("likes")
+    await expect(page.getByText('likes 1')).toBeVisible()
+  })
+})
