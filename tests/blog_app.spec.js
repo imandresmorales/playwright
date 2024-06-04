@@ -177,3 +177,58 @@ describe('5.22 solo el creador puede ver el botón delete de un blog, nadie más
     await expect(page.getByText("remove")).not.toBeVisible()
   })
 })
+
+describe('5.23 blogs ordenados de acuerdo con los likes, el blog con más likes en primer lugar', () => {
+  beforeEach(async ({ page, request }) => {
+    await request.post('http://localhost:3001/api/testing/reset')
+    await request.post('http://localhost:3001/api/users', {
+        data: {
+            name: "Matti Luukkainen",
+            username: "mluukkai",
+            password: "salainen"
+        }
+    })
+    await page.goto('http://localhost:5173')
+    await page.getByTestId('username').fill('mluukkai')
+    await page.getByTestId('password').fill('salainen')
+    await page.getByRole('button', {name: "login"}).click()
+    await page.getByRole('button', {name: "create new blog"}).click()
+    const texboxes = await page.getByRole('textbox').all()
+    await texboxes[0].fill('belladurmiente')
+    await texboxes[1].fill('walt disney')
+    await texboxes[2].fill('disney.com')
+    await page.getByRole('button', {name: "create"}).click()
+    await page.getByText("a new blog belladurmiente by walt disney added").waitFor()
+    // await page.getByRole('button', {name: "view"}).click()
+  })
+
+  test('5.23 blogs ordenados de acuerdo con los likes', async ({ page }) => {
+    await page.getByRole('button', {name: "create new blog"}).click()
+    const texboxes = await page.getByRole('textbox').all()
+    await texboxes[0].fill('Harry Potter')
+    await texboxes[1].fill('JKRowling')
+    await texboxes[2].fill('hp.com')
+    await page.getByRole('button', {name: "create"}).click()
+    await page.getByText("a new blog Harry Potter by JKRowling added").waitFor()
+
+    await page.getByTestId('view-button').first().click()
+    await page.getByRole('button', {name: "like"}).click()
+    await expect(page.getByText('likes 1')).toBeVisible()
+    await page.getByRole('button', {name: "hide"}).click()
+
+    await page.getByTestId('view-button').nth(1).click()
+    await page.getByRole('button', {name: "like"}).click()
+    await expect(page.getByText('likes 1')).toBeVisible()
+    await page.getByRole('button', {name: "like"}).click()
+    await expect(page.getByText('likes 2')).toBeVisible()
+    await page.getByRole('button', {name: "hide"}).click()
+    await expect(page.getByText('Matti')).toBeVisible()
+
+    await page.getByTestId('view-button').first().click()
+    await page.getByRole('button', {name: "like"}).click()
+    await expect(page.getByText('likes 2')).toBeVisible()
+
+    await page.getByRole('button', {name: "view"}).click()
+    await expect(page.getByText('likes 1')).toBeVisible()
+  })
+})
